@@ -1,3 +1,5 @@
+import socket
+hostname = socket.gethostname()
 import pickle
 import numpy as np
 import torch
@@ -6,12 +8,25 @@ from data import img_dataset
 from model import Conv
 
 
-train_path = "/Users/liu5/Documents/10-617HW/project/data/train"
-test_path = "/Users/liu5/Documents/10-617HW/project/data/test"
+torch.backends.cuda.matmul.allow_tf32 = False
+torch.backends.cudnn.allow_tf32 = False
+#parameters
+if "pro" in hostname.lower():  #my mac
+    train_path = "/Users/liu5/Documents/10-617HW/project/data/train"
+    test_path = "/Users/liu5/Documents/10-617HW/project/data/test"
+elif "exp" in hostname.lower():  #expanse 
+    train_path = "/expanse/lustre/projects/cwr109/zhen1997/data/train"
+    test_path = "/expanse/lustre/projects/cwr109/zhen1997/data/test"
+
 lr = 0.0005
 patience = 10
-epochs = 3
-batchsize = 32
+epochs = 100
+batchsize = 128
+if torch.cuda.is_available():
+    device = torch.device("cuda:0")
+else:
+    device = torch.device("cpu")
+
 
 def calc_PSNR(img1, img2):
     """
@@ -30,6 +45,8 @@ def validate(loader):
         psnrs, sizes = [], []
         for batch in loader:
             xs_, ys_ = batch
+            xs_ = xs_.to(device)
+            ys_ = ys_.to(device)
             yhat = model(xs_).detach().to("cpu").numpy()
             ys = ys_.detach().to("cpu").numpy()
             psnr = calc_PSNR(yhat, ys)
@@ -46,12 +63,13 @@ def init_params(m):
         torch.nn.init.zeros_(m.bias)
 
 #load datasets
-train = img_dataset(train_path, debug=False)
+train = img_dataset(train_path, debug=False, scale=True)
 train_loader = DataLoader(train, batchsize)
-test = img_dataset(test_path, debug=False)
+test = img_dataset(test_path, debug=False, scale=True)
 test_loader = DataLoader(test, batchsize)
 
 model = Conv()
+model.to(device)
 model.apply(init_params)
 optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5, patience=patience, mode="min")
@@ -67,6 +85,8 @@ for i in range(epochs):
     model.train()
     Yhats, Ys = [], []
     for xs, ys in train_loader:
+        xs = xs.to(device)
+        ys = ys.to(device)
         yhat = model(xs)
         N, C, H, W = ys.shape
         denominator = (1/(N*C*H*W)) * torch.sum(torch.square(ys - yhat))
@@ -75,8 +95,10 @@ for i in range(epochs):
         loss.backward()
         optimizer.step()
 
+    train_psnr = validate(train_loader)
     test_psnr = validate(test_loader)
-    print("Epoch %i LR: %.4f Training NSPR: %.2f Test NSPR: %.2f" % (epoch, learning_rate,  -loss, test_psnr))
-    results.append((epoch, learning_rate,  -loss, test_psnr))
+    print("Epoch %i LR: %.4f Training NSPR: %.2f Test NSPR: %.2f" % (epoch, learning_rate,  train_psnr, test_psnr))
+    results.append((epoch, learning_rate,  train_psnr, test_psnr))
+    torch.save(model.state_dict(), "latest.pt")
 torch.save(model.state_dict(), "model_parameters.pt")
 pickle.dump(results, open("results.pkl", "wb"))
