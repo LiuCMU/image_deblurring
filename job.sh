@@ -18,4 +18,5 @@ source /home/zhen1997/anaconda3/etc/profile.d/conda.sh
 conda activate py39
 
 cd "/home/zhen1997/image_deblurring"
-python train.py
+# python train.py
+wandb agent oilab/image_deblurring/ztpb3mm6

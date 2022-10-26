@@ -113,6 +113,11 @@ for i in range(epochs):
     train_psnr = validate(train_loader)
     test_psnr = validate(test_loader)
     print("Epoch %i LR: %.4f Training NSPR: %.2f Test NSPR: %.2f" % (epoch, learning_rate,  train_psnr, test_psnr))
+    wandb.log({
+        "learning_rate": learning_rate,
+        "train_psnr": train_psnr,
+        "test_psnr": test_psnr
+    })
     results.append((epoch, learning_rate,  train_psnr, test_psnr))
     if i//10 == 0:
         torch.save(model.state_dict(), "latest.pt")

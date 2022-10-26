@@ -1,0 +1,22 @@
+program: train.py
+metric:
+  goal: maximize
+  name: test_psnr
+method: bayes
+parameters:
+  num_layers:
+    min: 0
+    max: 10
+  conv_pad:
+    min: 1
+    max: 10
+  hidden_channels:
+    min: 3
+    max: 20
+  pool_pad:
+    min: 1
+    max: 10
+
+  
+
+
