@@ -1,5 +1,7 @@
 import socket
 hostname = socket.gethostname()
+import argparse
+import wandb
 import pickle
 import numpy as np
 import torch
@@ -17,11 +19,24 @@ if "pro" in hostname.lower():  #my mac
 elif "exp" in hostname.lower():  #expanse 
     train_path = "/expanse/lustre/projects/cwr109/zhen1997/data/train"
     test_path = "/expanse/lustre/projects/cwr109/zhen1997/data/test"
+elif "braavos" in hostname.lower():  #braavos
+    train_path = "/storage/users/jack/MS_ML_datasets/img_deblur/data/train"
+    test_path = "/storage/users/jack/MS_ML_datasets/img_deblur/data/test"
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--num_layers", type=int, default=2)
+parser.add_argument("--conv_pad", type=int, default=2)
+parser.add_argument("--hidden_channels", type=int, default=6)
+parser.add_argument("--pool_pad", type=int, default=2)
+args = parser.parse_args()
+wandb.init(project="img_deblur", entity="liu97", config=args)
+config = wandb.config
 
 lr = 0.0005
 patience = 10
 epochs = 100
-batchsize = 128
+batchsize = 16
 if torch.cuda.is_available():
     device = torch.device("cuda:0")
 else:
@@ -68,7 +83,7 @@ train_loader = DataLoader(train, batchsize)
 test = img_dataset(test_path, debug=False, scale=True)
 test_loader = DataLoader(test, batchsize)
 
-model = Conv()
+model = Conv(config.num_layers, config.conv_pad, config.hidden_channels, config.pool_pad)
 model.to(device)
 model.apply(init_params)
 optimizer = torch.optim.Adam(model.parameters(), lr=lr)
@@ -99,6 +114,7 @@ for i in range(epochs):
     test_psnr = validate(test_loader)
     print("Epoch %i LR: %.4f Training NSPR: %.2f Test NSPR: %.2f" % (epoch, learning_rate,  train_psnr, test_psnr))
     results.append((epoch, learning_rate,  train_psnr, test_psnr))
-    torch.save(model.state_dict(), "latest.pt")
+    if i//10 == 0:
+        torch.save(model.state_dict(), "latest.pt")
 torch.save(model.state_dict(), "model_parameters.pt")
 pickle.dump(results, open("results.pkl", "wb"))
