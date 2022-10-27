@@ -10,6 +10,10 @@ from data import img_dataset
 from model import Conv
 
 
+"""The following parameters are based on:
+https://wandb.ai/oilab/image_deblurring/runs/iifx4gq3?workspace=user-liu97
+"""
+
 torch.backends.cuda.matmul.allow_tf32 = False
 torch.backends.cudnn.allow_tf32 = False
 #parameters
@@ -25,9 +29,9 @@ elif "braavos" in hostname.lower():  #braavos
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--num_layers", type=int, default=2)
-parser.add_argument("--conv_pad", type=int, default=2)
-parser.add_argument("--hidden_channels", type=int, default=6)
+parser.add_argument("--num_layers", type=int, default=1)
+parser.add_argument("--conv_pad", type=int, default=1)
+parser.add_argument("--hidden_channels", type=int, default=20)
 parser.add_argument("--pool_pad", type=int, default=2)
 args = parser.parse_args()
 wandb.init(project="img_deblur", entity="liu97", config=args)
@@ -79,9 +83,9 @@ def init_params(m):
 
 #load datasets
 train = img_dataset(train_path, debug=False, scale=True)
-train_loader = DataLoader(train, batchsize)
+train_loader = DataLoader(train, batchsize, num_workers=6)
 test = img_dataset(test_path, debug=False, scale=True)
-test_loader = DataLoader(test, batchsize)
+test_loader = DataLoader(test, batchsize, num_workers=6)
 
 model = Conv(config.num_layers, config.conv_pad, config.hidden_channels, config.pool_pad)
 model.to(device)
