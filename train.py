@@ -25,8 +25,8 @@ elif "exp" in hostname.lower():  #expanse
     train_path = "/expanse/lustre/projects/cwr109/zhen1997/data/train"
     test_path = "/expanse/lustre/projects/cwr109/zhen1997/data/test"
 elif "braavos" in hostname.lower():  #braavos
-    train_path = "/storage/users/jack/MS_ML_datasets/img_deblur/data/train"
-    test_path = "/storage/users/jack/MS_ML_datasets/img_deblur/data/test"
+    train_path = "/storage/users/jack/MS_ML_datasets/img_deblur/train"
+    test_path = "/storage/users/jack/MS_ML_datasets/img_deblur/test"
 
 
 parser = argparse.ArgumentParser()
@@ -90,6 +90,7 @@ train = img_dataset(train_path, debug=False, scale=True)
 train_loader = DataLoader(train, batchsize, num_workers=4)
 test = img_dataset(test_path, debug=False, scale=True)
 test_loader = DataLoader(test, batchsize, num_workers=4)
+print("Number of training and testing: %i, %i" % (len(train), len(test)))
 
 model = Conv(config.num_layers, config.conv_pad, config.hidden_channels, config.pool_pad)
 model.to(device)
