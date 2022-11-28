@@ -85,3 +85,22 @@ class ResConv(nn.Module):
         out = self.ResBlock5(out)
         out = self.convEnd(out)
         return out
+    
+
+class Generator(nn.Module):
+    def __init__(self):
+        super(Generator, self).__init__()
+        self.convStart = nn.Conv2d(3, 20, 5, stride=1, padding=2)
+        hiddens = []
+        self.num_blocks = 19
+        for _ in range(self.num_blocks):
+            hiddens.append(ResBlock(20,20,3,1,1))
+        self.hiddens = nn.ModuleList(hiddens)
+        self.convEnd = nn.Conv2d(20, 3, 5, stride=1, padding=2)
+
+    def forward(self,x):
+        out = self.convStart(x)
+        for i in range(self.num_blocks):
+            out = self.hiddens[i](out)
+        out = self.convEnd(out)
+        return out
