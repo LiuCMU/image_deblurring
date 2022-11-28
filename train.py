@@ -41,7 +41,7 @@ config = wandb.config
 lr = 0.0005
 patience = 10
 epochs = 100
-batchsize = 16
+batchsize = 4
 if torch.cuda.is_available():
     device = torch.device("cuda:0")
 else:

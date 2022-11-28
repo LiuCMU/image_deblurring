@@ -24,7 +24,7 @@ if "pro" in hostname.lower():  #my mac
 elif "exp" in hostname.lower():  #expanse 
     train_path = "/expanse/lustre/projects/cwr109/zhen1997/data/train"
     test_path = "/expanse/lustre/projects/cwr109/zhen1997/data/test"
-elif "braavos" in hostname.lower():  #braavos
+elif ("braavos" in hostname.lower()) or ( "storm" in hostname.lower()):  #braavos/stromland
     train_path = "/storage/users/jack/MS_ML_datasets/img_deblur/train"
     test_path = "/storage/users/jack/MS_ML_datasets/img_deblur/test"
 
@@ -41,9 +41,9 @@ config = wandb.config
 lr = 0.0005
 patience = 10
 epochs = 100
-batchsize = 16
+batchsize = 4
 if torch.cuda.is_available():
-    device = torch.device("cuda:0")
+    device = torch.device("cuda:1")
 else:
     device = torch.device("cpu")
 
