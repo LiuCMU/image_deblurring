@@ -1,3 +1,6 @@
+import os
+import shutil
+import tarfile
 import socket
 hostname = socket.gethostname()
 import argparse
@@ -21,14 +24,30 @@ https://wandb.ai/oilab/image_deblurring/runs/iifx4gq3?workspace=user-liu97
 # torch.backends.cudnn.allow_tf32 = False
 torch.backends.cuda.matmul.allow_tf32 = True
 torch.backends.cudnn.allow_tf32 = True
+if torch.cuda.is_available():
+    device = torch.device("cuda:0")
+else:
+    device = torch.device("cpu")
 
 #parameters
 if "pro" in hostname.lower():  #my mac
     train_path = "/Users/liu5/Documents/10-617HW/project/data/train"
     test_path = "/Users/liu5/Documents/10-617HW/project/data/test"
 elif "exp" in hostname.lower():  #expanse 
-    train_path = "/expanse/lustre/projects/cwr109/zhen1997/data/train"
-    test_path = "/expanse/lustre/projects/cwr109/zhen1997/data/test"
+    #copy, extract tar file to the local computing node scratch
+    tar_path = "/expanse/lustre/projects/cwr109/zhen1997/img_deblur.tar"
+    local_scratch = f"/scratch/{os.environ['USER']}/job_{os.environ['SLURM_JOB_ID']}"
+    print("computing node local scratch path: %s" % local_scratch)
+    shutil.copy(tar_path, local_scratch)
+    tar = tarfile.open(os.path.join(local_scratch, "img_deblur.tar"))
+    tar.extractall(local_scratch)
+    tar.close()
+    print("Finished extracting the dataset")
+    train_path = os.path.join(local_scratch, "img_deblur/train")
+    test_path = os.path.join(local_scratch, "img_deblur/test")
+
+    device = torch.device("cuda:0")  #only using 1 GPU
+
 elif ("braavos" in hostname.lower()) or ( "storm" in hostname.lower()):  #braavos/stromland
     train_path = "/storage/users/jack/MS_ML_datasets/img_deblur/train"
     test_path = "/storage/users/jack/MS_ML_datasets/img_deblur/test"
@@ -48,11 +67,8 @@ config = wandb.config
 lr = 0.0005
 patience = 10
 epochs = 100
-batchsize = 1
-if torch.cuda.is_available():
-    device = torch.device("cuda:1")
-else:
-    device = torch.device("cpu")
+batchsize = 4
+
 
 
 def calc_PSNR(img1, img2):
