@@ -20,4 +20,4 @@ conda activate py39
 cd "/home/zhen1997/image_deblurring"
 # python train.py
 # wandb agent oilab/image_deblurring/ztpb3mm6
-python train_GAN.py 
+python train_perceptual_v2.py
