@@ -5,7 +5,6 @@ import tarfile
 import socket
 hostname = socket.gethostname()
 import argparse
-# import wandb
 import pickle
 import numpy as np
 import torch
@@ -16,10 +15,6 @@ from model import NAFNet
 from SSIM import ssim
 from PIL import Image
 
-
-"""The following parameters are based on:
-https://wandb.ai/oilab/image_deblurring/runs/iifx4gq3?workspace=user-liu97
-"""
 
 torch.backends.cuda.matmul.allow_tf32 = True
 torch.backends.cudnn.allow_tf32 = True
@@ -64,10 +59,6 @@ lr = 0.0005
 patience = 10
 epochs = 100
 batchsize = 8
-if torch.cuda.is_available():
-    device = torch.device("cuda:0")
-else:
-    device = torch.device("cpu")
 
 
 def calc_PSNR(img1, img2):
@@ -151,19 +142,17 @@ results = []
 for i in range(epochs):
     epoch = i+1
     learning_rate = optimizer.param_groups[0]['lr']
-    
-
     model.train()
     Yhats, Ys = [], []
     for xs, ys in train_loader:
         xs = xs.to(device)
         ys = ys.to(device)
         yhat = model(xs)
-        # N, C, H, W = ys.shape
-        # denominator = (1/(N*C*H*W)) * torch.sum(torch.square(ys - yhat))
-        # loss = -10*torch.log10((255*255)/denominator)
-        content_loss = PerceptualLoss(torch.nn.MSELoss())
-        loss = content_loss.get_loss(yhat, ys)
+        N, C, H, W = ys.shape
+        denominator = (1/(N*C*H*W)) * torch.sum(torch.square(ys - yhat))
+        loss = -10*torch.log10((255*255)/denominator)
+        # content_loss = PerceptualLoss(torch.nn.MSELoss())
+        # loss = content_loss.get_loss(yhat, ys)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
