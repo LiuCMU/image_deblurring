@@ -3,7 +3,7 @@
 #SBATCH --nodes=1
 #SBATCH --gpus=1
 #SBATCH --ntasks-per-node=4
-#SBATCH -t 48:00:00
+#SBATCH -t 24:00:00
 #SBATCH -J image_deblur
 #SBATCH -A cwr109
 #SBATCH --export=ALL

@@ -57,8 +57,8 @@ config = wandb.config
 
 lr = 0.0005
 patience = 10
-epochs = 100
-batchsize = 8
+epochs = 1000
+batchsize = 2
 
 
 def calc_PSNR(img1, img2):
@@ -131,9 +131,11 @@ test_loader = DataLoader(test, batchsize, num_workers=4)
 print("Number of training and testing: %i, %i" % (len(train), len(test)))
 
 # model = Conv(args.num_layers, args.conv_pad, args.hidden_channels, args.pool_pad)
-model = NAFNet()
+# model = NAFNet()
+model = NAFNet(width=32, middle_blk_num=1, enc_blk_nums=[1, 1, 1, 28], dec_blk_nums=[1, 1, 1, 1])
 model.to(device)
 model.apply(init_params)
+# model.load_state_dict(torch.load("latest_nafnet100.pt", map_location=device))
 optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5, patience=patience, mode="max")
 print("Total number of trainable parameters: ", sum(p.numel() for p in model.parameters() if p.requires_grad))
@@ -170,7 +172,7 @@ for i in range(epochs):
     })
     results.append((epoch, learning_rate,  train_psnr, train_ssim, test_psnr, test_ssim))
     if i//10 == 0:
-        torch.save(model.state_dict(), "latest_nafnet.pt")
+        torch.save(model.state_dict(), "latest_nafnet36blocks.pt")
     scheduler.step(test_psnr)
-torch.save(model.state_dict(), "model_nafnet.pt")
-pickle.dump(results, open("results_nafnet.pkl", "wb"))
+torch.save(model.state_dict(), "model_nafnet36blocks.pt")
+pickle.dump(results, open("results_nafne36blockst.pkl", "wb"))
